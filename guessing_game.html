@@ -1,0 +1,146 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guessing Game for IDAR Asia Q4 Townhall</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .hidden { display: none; }
+        #questions { margin-top: 20px; }
+        .question { margin-bottom: 15px; }
+        .feedback { font-style: italic; color: green; }
+        .ranking { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Guessing Game for IDAR Asia Q4 Townhall</h1>
+    
+    <div id="registration">
+        <h2>Register</h2>
+        <input type="text" id="name" placeholder="Enter your name" required>
+        <select id="group">
+            <option value="DMCM">DMCM</option>
+            <option value="C&SP">C&SP</option>
+            <option value="RMW">RMW</option>
+        </select>
+        <button onclick="register()">Register</button>
+        <p id="registrationResult"></p>
+    </div>
+
+    <div id="game" class="hidden">
+        <h2>Answer the Questions</h2>
+        <div id="questions"></div>
+        <button onclick="calculateResults()">Calculate Results</button>
+        <p id="submissionResult"></p>
+    </div>
+
+    <div id="ranking" class="hidden">
+        <h2>Rankings</h2>
+        <div id="rankings"></div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let scores = { "DMCM": 0, "C&SP": 0, "RMW": 0 }; // Object to hold total scores for each group
+        const questions = [
+            { id: 1, question: 'What is the capital of France?', correctAnswer: ['paris'] },
+            { id: 2, question: 'What is 2 + 2?', correctAnswer: ['4', 'four'] },
+            { id: 3, question: 'What is the largest planet in our solar system?', correctAnswer: ['jupiter'] },
+            { id: 4, question: 'What is the chemical symbol for water?', correctAnswer: ['h2o'] },
+            { id: 5, question: 'What year did the Titanic sink?', correctAnswer: ['1912'] }
+        ];
+
+        const userAnswers = {}; // Object to store user answers
+
+        function register() {
+            const name = document.getElementById('name').value;
+            const group = document.getElementById('group').value;
+
+            if (name) {
+                currentUser = { name: name, group: group, score: 0 };
+                document.getElementById('registration').classList.add('hidden');
+                document.getElementById('game').classList.remove('hidden');
+                loadQuestions();
+            } else {
+                alert("Please enter your name.");
+            }
+        }
+
+        function loadQuestions() {
+            const questionsDiv = document.getElementById('questions');
+            questionsDiv.innerHTML = '';
+
+            questions.forEach(q => {
+                questionsDiv.innerHTML += `
+                    <div class="question">
+                        <p>${q.question}</p>
+                        <input type="text" id="answer-${q.id}" placeholder="Your answer">
+                        <button onclick="submitAnswer(${q.id})">Submit</button>
+                        <p class="feedback" id="feedback-${q.id}" style="display:none;"></p>
+                    </div>
+                `;
+            });
+        }
+
+        function submitAnswer(questionId) {
+            const answer = document.getElementById(`answer-${questionId}`).value.toLowerCase();
+            userAnswers[questionId] = answer; // Store answer in userAnswers object
+            const feedbackDiv = document.getElementById(`feedback-${questionId}`);
+            const correctAnswers = questions[questionId - 1].correctAnswer;
+
+            if (correctAnswers.includes(answer)) {
+                feedbackDiv.innerText = "Correct!";
+                feedbackDiv.style.color = "green";
+                updateScore();
+                scores[currentUser.group] += currentUser.score; // Update total group score based on the user's score
+                displayRankings();
+            } else {
+                feedbackDiv.innerText = `Incorrect! The correct answer(s) was/were: ${correctAnswers.join(", ")}`;
+                feedbackDiv.style.color = "red";
+            }
+            feedbackDiv.style.display = "block";
+            document.getElementById(`answer-${questionId}`).disabled = true; // Disable the input
+            document.querySelector(`#answer-${questionId}`).nextElementSibling.disabled = true; // Disable the button
+        }
+
+        function updateScore() {
+            // Scoring System
+            if (currentUser.score < 1000) {
+                currentUser.score += 1000; // First correct answer
+            } else if (currentUser.score < 1500) {
+                currentUser.score += 500; // Second correct answer
+            } else if (currentUser.score < 1800) {
+                currentUser.score += 300; // Third correct answer
+            } else if (currentUser.score < 1900) {
+                currentUser.score += 100; // Fourth correct answer
+            } else if (currentUser.score < 1950) {
+                currentUser.score += 50; // Fifth correct answer
+            }
+        }
+
+        function calculateResults() {
+            document.getElementById('submissionResult').innerText = `${currentUser.name}, your score is: ${currentUser.score} points.`;
+            document.getElementById('game').classList.add('hidden');
+            document.getElementById('ranking').classList.remove('hidden');
+            displayRankings();
+        }
+
+        function displayRankings() {
+            const rankingsDiv = document.getElementById('rankings');
+            rankingsDiv.innerHTML = '';
+
+            // Create an array of groups with total scores for sorting
+            const groupScores = Object.entries(scores).map(([group, totalScore]) => ({ group, totalScore }));
+
+            // Sort by total score in descending order
+            groupScores.sort((a, b) => b.totalScore - a.totalScore);
+            
+            groupScores.forEach((entry, index) => {
+                rankingsDiv.innerHTML += `<p>${index + 1}. ${entry.group} - ${entry.totalScore} points</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
